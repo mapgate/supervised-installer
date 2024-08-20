@@ -19,13 +19,6 @@ URL_VERSION="https://version.home-assistant.io/stable.json"
 HASSIO_VERSION=$(curl -s ${URL_VERSION} | jq -e -r '.supervisor')
 URL_APPARMOR_PROFILE="https://version.home-assistant.io/apparmor.txt"
 
-# reload systemd
-info "Reload systemd"
-systemctl daemon-reload
-
-# Restart NetworkManager
-info "Restarting NetworkManager"
-systemctl restart "${SERVICE_NM}"
 
 # Set permissions of /etc/systemd/resolved.conf
 # check if file has correct permissions
@@ -37,8 +30,6 @@ fi
 # Enable and restart systemd-resolved
 info "Enable systemd-resolved"
 systemctl enable systemd-resolved.service> /dev/null 2>&1;
-info "Restarting systemd-resolved"
-systemctl restart systemd-resolved.service
 
 # Check and fix systemd-journal-gatewayd socket location
 if [ ! -S "/run/systemd-journal-gatewayd.sock" ]; then
@@ -59,10 +50,6 @@ if [ "$(systemctl is-active nfs-utils.service)" = 'inactive' ]; then
     info "Start nfs-utils.service"
     systemctl start nfs-utils.service
 fi
-
-# Restart Docker service
-info "Restarting docker service"
-systemctl restart "${SERVICE_DOCKER}"
 
 # Check network connection
 while ! curl -q ${URL_CHECK_ONLINE} >/dev/null 2>&1 ; do
@@ -153,11 +140,6 @@ sed -i -e "s,%%SERVICE_DOCKER%%,${SERVICE_DOCKER},g" \
 
 chmod a+x "${PREFIX}/sbin/hassio-apparmor"
 systemctl enable hassio-apparmor.service > /dev/null 2>&1;
-systemctl start hassio-apparmor.service
-
-# Start Supervisor
-info "Start Home Assistant Supervised"
-systemctl start hassio-supervisor.service
 
 # Install HA CLI
 info "Installing the 'ha' cli"
